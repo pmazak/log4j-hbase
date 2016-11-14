@@ -157,7 +157,7 @@ public class HBaseAppender extends AppenderSkeleton implements Appender {
         event.getRenderedMessage();
         event.getThrowableStrRep();
         buffer.add(event);
-        if (bufferSize == null || buffer.size() >= bufferSize)
+        if (getBufferSize() == null || buffer.size() >= getBufferSize())
             flushBuffer();
     }
 

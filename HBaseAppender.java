@@ -1,15 +1,16 @@
+package estalea.ir.eaa.utils;
 /**
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
- * limitations under the License. 
+ * limitations under the License.
  */
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
@@ -41,7 +42,7 @@ public class HBaseAppender extends AppenderSkeleton implements Appender {
 
     // Configurable properties
     private String tableName;
-    private Integer bufferSize;
+    private int bufferSize = 0;
     private String columnValues;
 
     // Internal fields
@@ -86,11 +87,11 @@ public class HBaseAppender extends AppenderSkeleton implements Appender {
     /**
      * Public setter so property can be configured in log4j.properties
      */
-    public void setBufferSize(Integer bufferSize) {
+    public void setBufferSize(int bufferSize) {
         this.bufferSize = bufferSize;
     }
 
-    public Integer getBufferSize() {
+    public int getBufferSize() {
         return bufferSize;
     }
 
@@ -157,7 +158,7 @@ public class HBaseAppender extends AppenderSkeleton implements Appender {
         event.getRenderedMessage();
         event.getThrowableStrRep();
         buffer.add(event);
-        if (getBufferSize() == null || buffer.size() >= getBufferSize())
+        if (buffer.size() >= getBufferSize())
             flushBuffer();
     }
 

@@ -1,4 +1,3 @@
-package estalea.ir.eaa.utils;
 /**
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +37,7 @@ import java.util.Random;
  *  log4j.appender.HBase.BufferSize=500
  *  log4j.appender.HBase.ColumnValues=d:log_level=%p, d:created=%d{yyyy-MM-dd HH:mm:ss}, d:class=%C, d:method=%M, d:line_number=%L, d:message=%m
  */
-public class HBaseAppender extends AppenderSkeleton implements Appender {
+public class HBaseAppender extends AppenderSkeleton implements Appender, Runnable {
 
     // Configurable properties
     private String tableName;
@@ -57,6 +56,8 @@ public class HBaseAppender extends AppenderSkeleton implements Appender {
     private ArrayList<LoggingEvent> buffer = new ArrayList<>();
 
     public HBaseAppender() {
+        Runtime.getRuntime().addShutdownHook(new Thread(this) {
+        });
     }
 
     protected void setHtable(HTable htable) {
@@ -83,7 +84,7 @@ public class HBaseAppender extends AppenderSkeleton implements Appender {
     public String getTableName() {
         return tableName;
     }
-    
+
     /**
      * Public setter so property can be configured in log4j.properties
      */
@@ -197,9 +198,16 @@ public class HBaseAppender extends AppenderSkeleton implements Appender {
         }
         try {
             if (htable != null) {
-                HTableUtil.bucketRsBatch(htable, batchedPuts);
-                // HTableUtil is deprecated but it's faster than:
-                // htable.batch(batchedPuts, new Object[batchedPuts.size()]);
+                try {
+                    HTableUtil.bucketRsBatch(htable, batchedPuts);
+                    // HTableUtil is deprecated but it's faster than:
+                    // htable.batch(batchedPuts, new Object[batchedPuts.size()]);
+                }
+                catch (IOException htableClosed) {
+                    // Reopen a connection to HBase to flush the logger buffer
+                    htable = new HTable(htable.getConfiguration(), htable.getName());
+                    HTableUtil.bucketRsBatch(htable, batchedPuts);
+                }
             }
         }
         catch (Exception e) {
@@ -215,5 +223,10 @@ public class HBaseAppender extends AppenderSkeleton implements Appender {
         bit128.putLong(System.nanoTime());
         bit128.putInt(random.nextInt());
         return MD5Hash.getMD5AsHex(bit128.array());
+    }
+
+    @Override
+    public void run() {
+        close();
     }
 }
